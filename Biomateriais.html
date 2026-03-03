@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biomateriais: Evolução, Obtenção e Aplicação Clínica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Warm Neutrals (Stone/Slate 50) with Clinical Teal (Teal 600) and Deep Cyan (Cyan 800) accents for a professional, calm, and scientific aesthetic. -->
+    
+    <!-- Application Structure Plan: The SPA is structured as an interactive educational dashboard tailored for 7th-term Biomedicine students. It follows a logical learning progression: 1. Historical Context (Generations), 2. Core Scientific Data (Obtainment Processes vs. Properties), 3. Practical Application (Material Drill-down), and 4. Future Outlook. This non-linear structure allows students to explore theoretical concepts and immediately connect them to clinical properties and specific materials, facilitating active learning and critical analysis required for their academic level. -->
+    
+    <!-- Visualization & Content Choices: 
+    1. Generations (Goal: Inform/Change) -> Interactive HTML/CSS Cards -> Interaction: Click to expand details -> Justification: Allows chunking of text-heavy historical data.
+    2. Processes vs Properties (Goal: Compare) -> Grouped Bar Chart (Chart.js/Canvas) -> Interaction: Hover tooltips, legend toggling -> Justification: Best way to compare 3 variables across 3 categories simultaneously, visualizing the exact trade-offs mentioned in the 'Texto Base'. Library: Chart.js.
+    3. Material Focus (Goal: Organize/Drill-down) -> Dynamic JS Selection Interface -> Interaction: Click list items to update the main display panel -> Justification: Prevents cognitive overload by showing one material at a time while encouraging exploration.
+    - Confirming NO SVG/Mermaid used. HTML/CSS geometry and Canvas used exclusively. -->
+    
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 50vh;
+            max-height: 450px;
+            min-height: 300px;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .generation-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .generation-card.active {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.2);
+            border-color: #0d9488;
+        }
+
+        .generation-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            opacity: 0;
+        }
+
+        .generation-card.active .generation-content {
+            max-height: 500px;
+            opacity: 1;
+            margin-top: 1rem;
+        }
+
+        .nav-btn.active {
+            background-color: #0d9488;
+            color: white;
+            font-weight: 600;
+        }
+
+        .material-selector.active {
+            border-left: 4px solid #0d9488;
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: #0f766e;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav class="sticky top-0 z-50 glass-panel shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-xl">B</div>
+                    <span class="font-bold text-xl text-slate-800 tracking-tight">Biomateriais<span class="text-teal-600 font-light"> | Biomedicina</span></span>
+                </div>
+                <div class="hidden md:flex space-x-2">
+                    <button onclick="scrollToSection('evolucao')" class="nav-btn px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100 transition-colors">Evolução</button>
+                    <button onclick="scrollToSection('propriedades')" class="nav-btn px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100 transition-colors">Propriedades</button>
+                    <button onclick="scrollToSection('materiais')" class="nav-btn px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 hover:bg-slate-100 transition-colors">Aplicações Clínicas</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-slate-800 text-white py-20 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute top-0 -left-10 w-40 h-40 bg-teal-500 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob"></div>
+            <div class="absolute top-0 -right-10 w-40 h-40 bg-cyan-500 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-2000"></div>
+            <div class="absolute -bottom-10 left-20 w-40 h-40 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-4000"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-teal-500/20 text-teal-300 text-xs font-semibold tracking-wider uppercase mb-4 border border-teal-500/30">Módulo Interativo - 7º Termo</span>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
+                Ciência e Engenharia de <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-300">Biomateriais</span>
+            </h1>
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-300 font-light">
+                Explore a transição histórica, os processos de obtenção e a aplicação clínica dos materiais que revolucionaram a medicina regenerativa e a engenharia de tecidos.
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24">
+
+        <section id="evolucao" class="scroll-mt-24">
+            <div class="mb-10 text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold text-slate-800 mb-4">A Evolução das Gerações</h2>
+                <div class="w-16 h-1 bg-teal-600 mx-auto mb-6 rounded-full"></div>
+                <p class="text-slate-600 text-lg leading-relaxed">
+                    Esta seção apresenta a linha do tempo conceitual da área. O objetivo é compreender como a ciência passou de buscar materiais que "se escondessem" do sistema imune para projetar estruturas que ativamente dialogam com as células. <strong>Clique nos cards abaixo para explorar as características de cada geração e entender essa mudança de paradigma clínico.</strong>
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="generation-card bg-white rounded-xl shadow-md border border-slate-200 p-6 relative" onclick="toggleGeneration(this)">
+                    <div class="absolute -top-4 -left-4 w-10 h-10 bg-slate-200 rounded-full border-4 border-white flex items-center justify-center font-bold text-slate-600 shadow-sm">1ª</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 mt-2">Bioinércia</h3>
+                    <p class="text-teal-600 font-medium text-sm mb-4">Foco: Substituição e Resistência</p>
+                    <div class="flex items-center gap-2 mb-2 text-slate-500 text-sm">
+                        <div class="w-2 h-2 rounded-full bg-slate-400"></div>
+                        <span>Baixa Interação Biológica</span>
+                    </div>
+                    
+                    <div class="generation-content text-slate-600 text-sm border-t border-slate-100 pt-4">
+                        <p class="mb-3">A primeira geração de biomateriais visava obter estruturas puramente mecânicas para substituir tecidos ausentes ou danificados. O principal objetivo era garantir que o material não causasse toxicidade sistêmica ou resposta imunológica severa (bioinércia).</p>
+                        <p><strong>Materiais Típicos:</strong> Ligas metálicas (Titânio, Aço Inoxidável), cerâmicas inertes (Alumina) e polímeros como silicone e teflon.</p>
+                        <p class="mt-2 text-red-500 text-xs font-semibold">Desafio: Formação de cápsula fibrosa que isola o implante.</p>
+                    </div>
+                    <div class="text-center mt-4 text-xs text-slate-400 font-medium uppercase tracking-widest instruction-text">Clique para detalhes</div>
+                </div>
+
+                <div class="generation-card bg-white rounded-xl shadow-md border border-slate-200 p-6 relative" onclick="toggleGeneration(this)">
+                    <div class="absolute -top-4 -left-4 w-10 h-10 bg-teal-100 rounded-full border-4 border-white flex items-center justify-center font-bold text-teal-700 shadow-sm">2ª</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 mt-2">Bioatividade</h3>
+                    <p class="text-teal-600 font-medium text-sm mb-4">Foco: Interação e Degradação</p>
+                    <div class="flex items-center gap-2 mb-2 text-slate-500 text-sm">
+                        <div class="w-2 h-2 rounded-full bg-teal-400"></div>
+                        <span>Integração Química com Tecido</span>
+                    </div>
+
+                    <div class="generation-content text-slate-600 text-sm border-t border-slate-100 pt-4">
+                        <p class="mb-3">Uma quebra de paradigma: os materiais não deveriam mais ser ignorados pelo corpo, mas sim provocar uma resposta biológica controlada. Esta geração introduziu materiais reabsorvíveis e materiais capazes de formar ligações químicas diretas com tecidos como o osso.</p>
+                        <p><strong>Materiais Típicos:</strong> Vidros biativos, Hidroxiapatita sintética, polímeros biodegradáveis (PLA, PGA).</p>
+                        <p class="mt-2 text-teal-600 text-xs font-semibold">Avanço Clínico: Osteointegração real em próteses ortopédicas e odontológicas.</p>
+                    </div>
+                    <div class="text-center mt-4 text-xs text-slate-400 font-medium uppercase tracking-widest instruction-text">Clique para detalhes</div>
+                </div>
+
+                <div class="generation-card bg-white rounded-xl shadow-md border border-slate-200 p-6 relative" onclick="toggleGeneration(this)">
+                    <div class="absolute -top-4 -left-4 w-10 h-10 bg-cyan-100 rounded-full border-4 border-white flex items-center justify-center font-bold text-cyan-700 shadow-sm">3ª</div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 mt-2">Biomimetismo</h3>
+                    <p class="text-teal-600 font-medium text-sm mb-4">Foco: Regeneração Tecidual</p>
+                    <div class="flex items-center gap-2 mb-2 text-slate-500 text-sm">
+                        <div class="w-2 h-2 rounded-full bg-cyan-400"></div>
+                        <span>Sinalização Celular em Nível Nano</span>
+                    </div>
+
+                    <div class="generation-content text-slate-600 text-sm border-t border-slate-100 pt-4">
+                        <p class="mb-3">A geração atual foca na <strong>Engenharia de Tecidos</strong>. Utilizam-se scaffolds (arcabouços) tridimensionais complexos que mimetizam a Matriz Extracelular (MEC). Eles não apenas suportam as células, mas enviam sinais biofísicos e bioquímicos para estimular a regeneração do tecido nativo, degradando-se proporcionalmente a essa formação.</p>
+                        <p><strong>Materiais Típicos:</strong> Compósitos nanoestruturados, matrizes descelularizadas, hidrogéis inteligentes.</p>
+                        <p class="mt-2 text-cyan-600 text-xs font-semibold">Meta: Restaurar a função completa e curar, em vez de apenas substituir.</p>
+                    </div>
+                    <div class="text-center mt-4 text-xs text-slate-400 font-medium uppercase tracking-widest instruction-text">Clique para detalhes</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="propriedades" class="scroll-mt-24">
+            <div class="grid lg:grid-cols-12 gap-10 items-center">
+                <div class="lg:col-span-5">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-4">Processos vs. Propriedades</h2>
+                    <div class="w-16 h-1 bg-teal-600 mb-6 rounded-full"></div>
+                    <p class="text-slate-600 text-lg mb-6 leading-relaxed">
+                        Neste módulo de análise visual, comparamos como os três métodos principais de obtenção de biomateriais impactam suas propriedades cruciais. A compreensão dessas métricas é fundamental para a seleção do material adequado diante de um desafio clínico específico.
+                    </p>
+                    <p class="text-sm text-slate-500 mb-6 p-4 bg-slate-100 border-l-4 border-teal-500 rounded-r-lg">
+                        <strong>Como interpretar o gráfico:</strong><br>O eixo Y representa uma escala de eficiência de 0 a 10. Interaja com a legenda acima do gráfico para isolar métricas específicas, como Biocompatibilidade ou Biodegradabilidade. Observe a superioridade teórica da Engenharia de Tecidos e os *trade-offs* entre extração natural e síntese.
+                    </p>
+                    
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm border border-slate-100">
+                            <div class="w-3 h-3 bg-[#0f766e] rounded-sm flex-shrink-0"></div>
+                            <p class="text-sm text-slate-700"><span class="font-bold">Biocompatibilidade:</span> Aceitação orgânica, essencial para evitar rejeição aguda ou crônica.</p>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm border border-slate-100">
+                            <div class="w-3 h-3 bg-[#2dd4bf] rounded-sm flex-shrink-0"></div>
+                            <p class="text-sm text-slate-700"><span class="font-bold">Biodegradabilidade:</span> Capacidade de reabsorção sistêmica segura no tempo ideal de cura.</p>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm border border-slate-100">
+                            <div class="w-3 h-3 bg-[#94a3b8] rounded-sm flex-shrink-0"></div>
+                            <p class="text-sm text-slate-700"><span class="font-bold">Resistência Mecânica:</span> Suporte de carga estrutural (crítico para implantes ósseos e dentários).</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                    <div class="chart-container">
+                        <canvas id="propriedadesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="materiais" class="scroll-mt-24 bg-slate-800 text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            
+            <div class="text-center max-w-3xl mx-auto mb-12 relative z-10">
+                <h2 class="text-3xl font-bold mb-4">Aplicações Clínicas & Escolha de Materiais</h2>
+                <div class="w-16 h-1 bg-teal-500 mx-auto mb-6 rounded-full"></div>
+                <p class="text-slate-300 text-lg leading-relaxed">
+                    Nesta área de drill-down, conectamos a teoria estudada a materiais reais abordados nos artigos. Utilize o menu lateral para selecionar um biomaterial específico e avaliar suas características processuais, vantagens, limitações intrínsecas e sua principal indicação clínica no mercado atual.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-12 gap-8 relative z-10">
+                <div class="md:col-span-4 lg:col-span-3 bg-white/10 rounded-xl p-2 backdrop-blur-sm border border-white/20">
+                    <div class="flex flex-col gap-1">
+                        <button onclick="updateMaterialPanel('quitosana')" id="btn-quitosana" class="material-selector active w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-white/5 transition-all focus:outline-none flex justify-between items-center">
+                            <span>Quitosana</span>
+                            <span class="text-xs font-mono bg-teal-500/20 text-teal-300 px-2 py-1 rounded">Natural</span>
+                        </button>
+                        <button onclick="updateMaterialPanel('hidroxiapatita')" id="btn-hidroxiapatita" class="material-selector w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-white/5 transition-all focus:outline-none flex justify-between items-center">
+                            <span>Hidroxiapatita</span>
+                            <span class="text-xs font-mono bg-slate-500/50 text-slate-300 px-2 py-1 rounded">Cerâmica</span>
+                        </button>
+                        <button onclick="updateMaterialPanel('colageno')" id="btn-colageno" class="material-selector w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-white/5 transition-all focus:outline-none flex justify-between items-center">
+                            <span>Colágeno Bovino</span>
+                            <span class="text-xs font-mono bg-teal-500/20 text-teal-300 px-2 py-1 rounded">Natural</span>
+                        </button>
+                        <button onclick="updateMaterialPanel('pla')" id="btn-pla" class="material-selector w-full text-left px-4 py-3 rounded-lg text-slate-200 hover:bg-white/5 transition-all focus:outline-none flex justify-between items-center">
+                            <span>Polímero PLA</span>
+                            <span class="text-xs font-mono bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded">Sintético</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="md:col-span-8 lg:col-span-9 bg-white rounded-xl shadow-xl p-8 text-slate-800 border border-slate-200 transition-all" id="material-display">
+                    
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <div class="bg-teal-50 rounded-2xl p-8 border border-teal-100 flex flex-col md:flex-row items-center gap-8 shadow-sm">
+                <div class="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0 text-teal-600 text-2xl border border-teal-200">
+                    &#9874; 
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">O Papel do Biomédico & O Futuro da Nanotecnologia</h3>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        O avanço da expectativa de vida exige soluções além da prótese metálica tradicional. Como evidenciado nos textos, o papel da Biomedicina não é a fabricação industrial em si, mas a <strong>pesquisa de resposta tecidual, os testes de biocompatibilidade e o desenvolvimento de diagnósticos in vitro</strong> para validação de matrizes e nanopartículas.
+                    </p>
+                    <p class="text-slate-600 leading-relaxed font-semibold">
+                        A tendência absoluta do mercado aponta para a integração da nanotecnologia na criação de <span class="text-teal-700 border-b border-teal-300">biomateriais inteligentes</span> — estruturas sintéticas de controle milimétrico revestidas com agentes bioativos naturais que respondem a estímulos biológicos do próprio paciente.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-center text-sm mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>Painel Educacional Interativo - Baseado em "Artigo-Produção de Biomateriais.pdf" e "TEXTO BASE".</p>
+            <p class="mt-2 text-slate-600">Desenvolvido para análise estrutural em metodologias ativas.</p>
+        </div>
+    </footer>
+
+    <script>
+        const materialsData = {
+            'quitosana': {
+                name: 'Quitosana',
+                type: 'Polímero Natural',
+                origin: 'Extraída da carapaça de crustáceos (desacetilação da quitina).',
+                advantages: 'Alta biocompatibilidade, biodegradabilidade enzimática natural e excelentes propriedades antimicrobianas e hemostáticas.',
+                limitations: 'Menor resistência mecânica se não reticulada; padronização complexa devido à origem biológica.',
+                application: 'Curativos avançados para queimaduras, hemostáticos de emergência e matrizes flexíveis para entrega de fármacos.',
+                icon: '&#129408;' 
+            },
+            'hidroxiapatita': {
+                name: 'Hidroxiapatita (HA)',
+                type: 'Cerâmica Bioativa',
+                origin: 'Derivada de matriz mineral óssea bovina (natural) ou sintetizada via precipitação úmida (sintética).',
+                advantages: 'Notável semelhança química com a fase mineral do osso humano, permitindo excepcional osteointegração (ligação química direta ao tecido vivo).',
+                limitations: 'Alta fragilidade mecânica (quebradiça) e baixíssima elasticidade, impedindo seu uso isolado em áreas de alta carga.',
+                application: 'Enxertos ósseos preenchedores em odontologia/ortopedia e como revestimento de próteses metálicas (ex: titânio) para melhorar a bioatividade.',
+                icon: '&#129460;' 
+            },
+            'colageno': {
+                name: 'Colágeno Bovino',
+                type: 'Polímero Natural',
+                origin: 'Extraído e purificado a partir de tendões ou derme de fontes animais (bovina/suína).',
+                advantages: 'Constitui a proteína estrutural base da matriz extracelular (MEC), oferecendo reconhecimento celular inigualável para fibroblastos.',
+                limitations: 'Risco inerente de imunogenicidade (reação de corpo estranho às proteínas animais) e altas taxas de variabilidade entre lotes.',
+                application: 'Criação de scaffolds (arcabouços tridimensionais) para Engenharia de Tecidos, focados na regeneração de pele e cartilagem.',
+                icon: '&#129516;' 
+            },
+            'pla': {
+                name: 'Ácido Polilático (PLA)',
+                type: 'Polímero Sintético',
+                origin: 'Sintetizado quimicamente a partir de monômeros derivados de fontes renováveis (fermentação de amido).',
+                advantages: 'Controle absoluto sobre as propriedades mecânicas e sobre a taxa exata de degradação reprodutível em escala industrial.',
+                limitations: 'Falta de sinais bioativos inerentes; a degradação ácida pode gerar inflamação local se ocorrer muito rapidamente.',
+                application: 'Parafusos ortopédicos reabsorvíveis, placas de fixação interna e filamentos base para impressão 3D médica de implantes personalizados.',
+                icon: '&#9881;' 
+            }
+        };
+
+        function toggleGeneration(element) {
+            const allCards = document.querySelectorAll('.generation-card');
+            
+            if (element.classList.contains('active')) {
+                element.classList.remove('active');
+                element.querySelector('.instruction-text').textContent = 'Clique para detalhes';
+                return;
+            }
+
+            allCards.forEach(card => {
+                card.classList.remove('active');
+                card.querySelector('.instruction-text').textContent = 'Clique para detalhes';
+            });
+
+            element.classList.add('active');
+            element.querySelector('.instruction-text').textContent = 'Recolher detalhes';
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateMaterialPanel(materialKey) {
+            const data = materialsData[materialKey];
+            const display = document.getElementById('material-display');
+            
+            document.querySelectorAll('.material-selector').forEach(btn => {
+                btn.classList.remove('active', 'border-l-4', 'border-teal-500', 'bg-slate-800', 'text-white');
+                btn.classList.add('text-slate-200', 'hover:bg-white/5');
+                
+                let badge = btn.querySelector('span:nth-child(2)');
+                if(btn.id !== 'btn-' + materialKey){
+                     badge.classList.remove('bg-white', 'text-teal-800');
+                }
+            });
+
+            const activeBtn = document.getElementById(`btn-${materialKey}`);
+            activeBtn.classList.add('active');
+            activeBtn.classList.remove('text-slate-200', 'hover:bg-white/5');
+            activeBtn.classList.add('bg-white', 'text-slate-800');
+            
+            let activeBadge = activeBtn.querySelector('span:nth-child(2)');
+            activeBadge.className = 'text-xs font-bold bg-slate-100 text-teal-800 px-2 py-1 rounded shadow-sm border border-slate-200';
+
+            display.style.opacity = 0;
+            
+            setTimeout(() => {
+                display.innerHTML = `
+                    <div class="flex items-start justify-between mb-6 pb-6 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-3xl font-extrabold text-slate-800 mb-2 flex items-center gap-3">
+                                <span class="text-4xl text-teal-600 bg-teal-50 w-12 h-12 flex items-center justify-center rounded-xl shadow-sm border border-teal-100">${data.icon}</span> 
+                                ${data.name}
+                            </h3>
+                            <span class="inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm font-semibold border border-slate-200">${data.type}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <div class="mb-6">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Processo de Obtenção</h4>
+                                <p class="text-slate-700 leading-relaxed font-medium">${data.origin}</p>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-xs font-bold text-teal-600 uppercase tracking-wider mb-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-teal-500"></span> Principal Vantagem</h4>
+                                <p class="text-slate-700 leading-relaxed">${data.advantages}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                            <div class="mb-5">
+                                <h4 class="text-xs font-bold text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Limitação Técnica</h4>
+                                <p class="text-slate-700 leading-relaxed text-sm">${data.limitations}</p>
+                            </div>
+                            
+                            <div class="pt-5 border-t border-slate-200">
+                                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Indicação Clínica Destaque</h4>
+                                <p class="text-teal-800 font-semibold leading-relaxed">${data.application}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                display.style.opacity = 1;
+            }, 150);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const ctx = document.getElementById('propriedadesChart').getContext('2d');
+            
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748b';
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Extração Natural', 'Síntese Química', 'Engenharia de Tecidos'],
+                    datasets: [
+                        {
+                            label: 'Biocompatibilidade',
+                            data: [9, 5, 10],
+                            backgroundColor: '#0f766e', 
+                            borderRadius: 4,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'Biodegradabilidade',
+                            data: [8, 4, 9],
+                            backgroundColor: '#2dd4bf', 
+                            borderRadius: 4,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'Resistência Mecânica',
+                            data: [3, 9, 6],
+                            backgroundColor: '#94a3b8', 
+                            borderRadius: 4,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                            titleFont: { size: 14, family: "'Inter', sans-serif" },
+                            bodyFont: { size: 13, family: "'Inter', sans-serif" },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + ' / 10';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Escala de Eficiência (0 - 10)',
+                                font: { weight: '600' }
+                            },
+                            grid: {
+                                color: '#f1f5f9',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    weight: 'bold',
+                                    size: 13
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                }
+            });
+
+            updateMaterialPanel('quitosana');
+        });
+    </script>
+</body>
+</html>
